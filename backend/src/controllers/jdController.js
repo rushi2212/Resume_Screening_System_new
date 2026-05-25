@@ -19,6 +19,11 @@ const {
   callAIService,
 } = require("../services/aiService");
 
+const {
+  parseJDLocally,
+  mergeParsedJD,
+} = require("../utils/jdParser");
+
 const uploadJD = async (
   req,
   res
@@ -65,15 +70,38 @@ const uploadJD = async (
       extractedText = result.value;
     }
 
-    // AI Parse JD
-    const parsedJD =
-      await callAIService(
+    if (!extractedText.trim()) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Could not extract text from the JD file. Please upload a text-based PDF or DOCX.",
+      });
+    }
+
+    const localParsedJD =
+      parseJDLocally(extractedText);
+
+    let aiParsedJD = {};
+
+    try {
+      aiParsedJD = await callAIService(
         "/parse-jd",
         {
           jd_text:
             extractedText,
         }
       );
+    } catch (error) {
+      console.log(
+        "AI JD parsing failed, using local parser:",
+        error.message
+      );
+    }
+
+    const parsedJD = mergeParsedJD(
+      aiParsedJD,
+      localParsedJD
+    );
 
     const resolvedTitle =
       resolveJobTitle(
