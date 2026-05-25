@@ -109,7 +109,8 @@ const uploadResume = async (req, res) => {
     // Duplicate Check
     const existingCandidate =
       await checkDuplicateCandidate(
-        parsedData.email
+        parsedData.email,
+        jobId
       );
 
     if (existingCandidate) {
@@ -117,7 +118,7 @@ const uploadResume = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Candidate already exists",
+          "Candidate already analyzed for this job",
       });
     }
 
@@ -164,11 +165,16 @@ const uploadResume = async (req, res) => {
         // Basic Info
         name: parsedData.name,
 
-        email: parsedData.email,
+        email:
+          parsedData.email
+            ?.toLowerCase()
+            .trim(),
 
         phone: parsedData.phone,
 
         // Selected Job Info
+        job: jobId,
+
         jobTitle:
           selectedJobData.title,
 
@@ -253,6 +259,14 @@ const uploadResume = async (req, res) => {
   } catch (error) {
 
     console.log(error);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Candidate already analyzed for this job",
+      });
+    }
 
     res.status(error.statusCode || 500).json({
       success: false,

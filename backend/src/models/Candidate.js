@@ -10,7 +10,8 @@ const candidateSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      lowercase: true,
+      trim: true,
     },
 
     phone: {
@@ -19,6 +20,12 @@ const candidateSchema = new mongoose.Schema(
     },
 
     // Job Info
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true,
+    },
+
     jobTitle: {
       type: String,
       default: "",
@@ -137,6 +144,11 @@ const candidateSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+);
+
+candidateSchema.index(
+  { email: 1, job: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model(
