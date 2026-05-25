@@ -8,8 +8,6 @@ const {
 
 const mammoth = require("mammoth");
 
-const axios = require("axios");
-
 const Job =
   require("../models/Job");
 
@@ -17,9 +15,9 @@ const {
   resolveJobTitle,
 } = require("../utils/jobTitleHelper");
 
-const AI_SERVICE_URL =
-  process.env.AI_SERVICE_URL ||
-  "http://localhost:8000";
+const {
+  callAIService,
+} = require("../services/aiService");
 
 const uploadJD = async (
   req,
@@ -68,17 +66,14 @@ const uploadJD = async (
     }
 
     // AI Parse JD
-    const parseResponse =
-      await axios.post(
-        `${AI_SERVICE_URL}/parse-jd`,
+    const parsedJD =
+      await callAIService(
+        "/parse-jd",
         {
           jd_text:
             extractedText,
         }
       );
-
-    const parsedJD =
-      parseResponse.data;
 
     const resolvedTitle =
       resolveJobTitle(
@@ -123,7 +118,7 @@ const uploadJD = async (
 
     console.log(error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });

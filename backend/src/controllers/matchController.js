@@ -1,14 +1,12 @@
-const axios = require("axios");
-
 const Candidate =
   require("../models/Candidate");
 
 const Job =
   require("../models/Job");
 
-const AI_SERVICE_URL =
-  process.env.AI_SERVICE_URL ||
-  "http://localhost:8000";
+const {
+  callAIService,
+} = require("../services/aiService");
 
 const matchCandidatesToJob =
   async (req, res) => {
@@ -47,9 +45,9 @@ const matchCandidatesToJob =
 
         };
 
-        const matchResponse =
-          await axios.post(
-            `${AI_SERVICE_URL}/advanced-match`,
+        const matchData =
+          await callAIService(
+            "/advanced-match",
             {
               candidate_data: {
                 name:
@@ -87,7 +85,7 @@ const matchCandidatesToJob =
           candidate,
 
           matchData:
-            matchResponse.data,
+            matchData,
         });
       }
 
@@ -107,7 +105,7 @@ const matchCandidatesToJob =
 
     } catch (error) {
 
-      res.status(500).json({
+      res.status(error.statusCode || 500).json({
         success: false,
         message: error.message,
       });

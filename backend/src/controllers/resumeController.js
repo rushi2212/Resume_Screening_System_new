@@ -8,8 +8,6 @@ const {
 
 const mammoth = require("mammoth");
 
-const axios = require("axios");
-
 const Candidate =
   require("../models/Candidate");
 
@@ -24,9 +22,9 @@ const {
   resolveJobTitle,
 } = require("../utils/jobTitleHelper");
 
-const AI_SERVICE_URL =
-  process.env.AI_SERVICE_URL ||
-  "http://localhost:8000";
+const {
+  callAIService,
+} = require("../services/aiService");
 
 const uploadResume = async (req, res) => {
 
@@ -100,16 +98,13 @@ const uploadResume = async (req, res) => {
     }
 
     // Parse Resume Using AI Service
-    const parseResponse =
-      await axios.post(
-        `${AI_SERVICE_URL}/parse-resume`,
+    const parsedData =
+      await callAIService(
+        "/parse-resume",
         {
           resume_text: extractedText,
         }
       );
-
-    const parsedData =
-      parseResponse.data;
 
     // Duplicate Check
     const existingCandidate =
@@ -127,9 +122,9 @@ const uploadResume = async (req, res) => {
     }
 
     // Multi-parameter AI Matching
-    const matchResponse =
-      await axios.post(
-        `${AI_SERVICE_URL}/advanced-match`,
+    const matchData =
+      await callAIService(
+        "/advanced-match",
         {
           candidate_data: {
             name:
@@ -161,9 +156,6 @@ const uploadResume = async (req, res) => {
           },
         }
       );
-
-    const matchData =
-      matchResponse.data;
 
     // Save Candidate
     const candidate =
@@ -262,7 +254,7 @@ const uploadResume = async (req, res) => {
 
     console.log(error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
