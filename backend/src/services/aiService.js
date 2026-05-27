@@ -1,6 +1,8 @@
 const axios = require("axios");
 
-const AI_SERVICE_URL = "https://resume-screening-system-ai-service-t38l.onrender.com";
+const AI_SERVICE_URL =
+  process.env.AI_SERVICE_URL ||
+  "http://localhost:8000";
 const callAIService = async (path, payload) => {
   try {
     const response = await axios.post(

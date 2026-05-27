@@ -24,6 +24,12 @@ const jobSchema = new mongoose.Schema(
       },
     ],
 
+    preferredDomains: [
+      {
+        type: String,
+      },
+    ],
+
     responsibilities: [
       {
         type: String,
@@ -32,6 +38,11 @@ const jobSchema = new mongoose.Schema(
 
     rawJDText: {
       type: String,
+    },
+
+    jdEmbedding: {
+      type: [Number],
+      default: [],
     },
 
     uploadedJDFile: {

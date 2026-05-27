@@ -18,7 +18,9 @@ function Candidates() {
     getCandidates()
       .then((data) => {
         setCandidates(
-          data.candidates
+          Array.isArray(data.candidates)
+            ? data.candidates
+            : []
         );
       })
       .catch((error) => {
@@ -41,7 +43,7 @@ function Candidates() {
         Ranked Candidates
       </h2>
 
-      {candidates.map(
+      {candidates?.map(
         (candidate) => (
 
           <CandidateCard

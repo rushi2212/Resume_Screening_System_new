@@ -78,6 +78,14 @@ const uploadJD = async (
       });
     }
 
+    const embeddingResponse =
+      await callAIService(
+        "/embeddings",
+        {
+          text: extractedText,
+        }
+      );
+
     const localParsedJD =
       parseJDLocally(extractedText);
 
@@ -125,11 +133,17 @@ const uploadJD = async (
         preferredEducation:
           parsedJD.preferred_education,
 
+        preferredDomains:
+          parsedJD.preferred_domains,
+
         responsibilities:
           parsedJD.responsibilities,
 
         rawJDText:
           extractedText,
+
+        jdEmbedding:
+          embeddingResponse.embedding || [],
 
         uploadedJDFile:
           req.file.filename,
@@ -159,7 +173,9 @@ const getJobs =
     try {
 
       const jobs =
-        await Job.find().sort({
+        await Job.find({}).select(
+          "-jdEmbedding"
+        ).sort({
           createdAt: -1,
         });
 

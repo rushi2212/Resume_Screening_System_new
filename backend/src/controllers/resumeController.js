@@ -26,6 +26,11 @@ const {
   callAIService,
 } = require("../services/aiService");
 
+const {
+  normalizeSkills,
+  getMissingSkills,
+} = require("../utils/skillNormalizer");
+
 const uploadResume = async (req, res) => {
 
   try {
@@ -53,7 +58,7 @@ const uploadResume = async (req, res) => {
 
     const selectedJobData = {
       requiredSkills:
-        selectedJob.requiredSkills || [],
+        normalizeSkills(selectedJob.requiredSkills || []),
 
       minimumExperience:
         selectedJob.minimumExperience || 0,
@@ -106,6 +111,29 @@ const uploadResume = async (req, res) => {
         }
       );
 
+    const resumeEmbeddingResponse =
+      await callAIService(
+        "/embeddings",
+        {
+          text: extractedText,
+        }
+      );
+
+    const jobEmbedding =
+      selectedJob.jdEmbedding &&
+      selectedJob.jdEmbedding.length
+        ? selectedJob.jdEmbedding
+        : (
+            await callAIService(
+              "/embeddings",
+              {
+                text:
+                  selectedJob.rawJDText ||
+                  "",
+              }
+            )
+          ).embedding;
+
     // Duplicate Check
     const existingCandidate =
       await checkDuplicateCandidate(
@@ -132,7 +160,7 @@ const uploadResume = async (req, res) => {
               parsedData.name,
 
             skills:
-              parsedData.skills,
+              normalizeSkills(parsedData.skills || []),
 
             experience:
               parsedData.experience,
@@ -143,7 +171,22 @@ const uploadResume = async (req, res) => {
             education:
               parsedData.education,
 
+            domains:
+              parsedData.domains,
+
           },
+
+          candidate_embedding:
+            resumeEmbeddingResponse.embedding || [],
+
+          job_embedding:
+            jobEmbedding || [],
+
+          candidate_text:
+            extractedText,
+
+          job_text:
+            selectedJob.rawJDText || "",
 
           job_data: {
             required_skills:
@@ -183,17 +226,21 @@ const uploadResume = async (req, res) => {
 
         // Candidate Skills
         skills:
-          parsedData.skills,
+          normalizeSkills(parsedData.skills || []),
 
         normalizedSkills:
-          matchData.normalized_skills,
+          normalizeSkills(
+            matchData.normalized_skills || parsedData.skills || []
+          ),
 
         expandedSkills:
-          matchData.expanded_skills,
+          normalizeSkills(matchData.expanded_skills || []),
 
         missingSkills:
-          matchData.missingSkills ||
-          matchData.missing_skills,
+          getMissingSkills(
+            parsedData.skills || [],
+            selectedJobData.requiredSkills
+          ),
 
         projects:
           parsedData.projects,
@@ -208,13 +255,22 @@ const uploadResume = async (req, res) => {
         jobTitles:
           parsedData.job_titles,
 
+        domains:
+          parsedData.domains,
+
         resumeText:
           extractedText,
+
+        resumeEmbedding:
+          resumeEmbeddingResponse.embedding || [],
 
         // AI Match Data
         matchScore:
           matchData.finalScore ||
           matchData.match_score,
+
+        semanticSimilarity:
+          matchData.semantic_similarity,
 
         skillsScore:
           matchData.skillsScore ||

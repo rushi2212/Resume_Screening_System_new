@@ -37,7 +37,7 @@ function ResumeUploader() {
 
     getJobs()
       .then((data) => {
-        setJobs(data.jobs);
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
       })
       .catch((error) => {
         console.log(error);
@@ -164,7 +164,7 @@ function ResumeUploader() {
           Select Job Profile
         </option>
 
-        {jobs.map((job) => (
+        {jobs?.map((job) => (
 
           <option
             key={job._id}

@@ -5,6 +5,11 @@ const Job =
   require("../models/Job");
 
 const {
+  normalizeSkills,
+  getMissingSkills,
+} = require("../utils/skillNormalizer");
+
+const {
   callAIService,
 } = require("../services/aiService");
 
@@ -31,11 +36,15 @@ const matchCandidatesToJob =
 
       const rankedCandidates = [];
 
+      const normalizedJobSkills = normalizeSkills(
+        job.requiredSkills || []
+      );
+
       for (const candidate of candidates) {
 
         const jobData = {
           requiredSkills:
-            job.requiredSkills || [],
+            normalizedJobSkills,
 
           minimumExperience:
             job.minimumExperience || 0,
@@ -65,6 +74,12 @@ const matchCandidatesToJob =
                 education:
                   candidate.education,
 
+                domains:
+                  candidate.domains || [],
+
+                resume_text:
+                  candidate.resumeText || "",
+
               },
 
               job_data: {
@@ -76,13 +91,57 @@ const matchCandidatesToJob =
 
                 preferred_education:
                   jobData.preferredEducation,
+
+                preferred_domains:
+                  job.preferredDomains || [],
+
+                jd_text:
+                  job.rawJDText || "",
               },
+
+              candidate_embedding:
+                candidate.resumeEmbedding || [],
+
+              job_embedding:
+                job.jdEmbedding || [],
+
+              candidate_text:
+                candidate.resumeText || "",
+
+              job_text:
+                job.rawJDText || "",
             }
           );
 
         rankedCandidates.push({
 
-          candidate,
+          candidate: (() => {
+            const plainCandidate =
+              candidate.toObject();
+
+            plainCandidate.skills = normalizeSkills(
+              plainCandidate.skills || []
+            );
+
+            plainCandidate.requiredSkills = normalizedJobSkills;
+
+            plainCandidate.normalizedSkills = normalizeSkills(
+              plainCandidate.normalizedSkills || plainCandidate.skills || []
+            );
+
+            plainCandidate.expandedSkills = normalizeSkills(
+              plainCandidate.expandedSkills || []
+            );
+
+            plainCandidate.missingSkills = getMissingSkills(
+              plainCandidate.skills,
+              normalizedJobSkills
+            );
+
+            delete plainCandidate.resumeEmbedding;
+
+            return plainCandidate;
+          })(),
 
           matchData:
             matchData,
@@ -99,7 +158,13 @@ const matchCandidatesToJob =
 
       res.status(200).json({
         success: true,
-        job,
+        job: (() => {
+          const plainJob = job.toObject();
+
+          delete plainJob.jdEmbedding;
+
+          return plainJob;
+        })(),
         rankedCandidates,
       });
 

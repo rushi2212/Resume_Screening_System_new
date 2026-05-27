@@ -1,5 +1,9 @@
 const Job = require("../models/Job");
 
+const {
+  normalizeSkills,
+} = require("../utils/skillNormalizer");
+
 const createJob = async (req, res) => {
 
   try {
@@ -16,7 +20,9 @@ const createJob = async (req, res) => {
 
         title,
 
-        requiredSkills,
+        requiredSkills: normalizeSkills(
+          requiredSkills || []
+        ),
 
         minimumExperience,
 
@@ -41,7 +47,9 @@ const getJobs = async (req, res) => {
 
   try {
 
-    const jobs = await Job.find();
+    const jobs = await Job.find().select(
+      "-jdEmbedding"
+    );
 
     res.status(200).json({
       success: true,

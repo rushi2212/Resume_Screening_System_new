@@ -18,7 +18,7 @@ function Jobs() {
   const loadJobs = () => {
     getJobs()
       .then((data) => {
-        setJobs(data.jobs);
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
       })
       .catch((error) => {
         console.log(error);
@@ -67,7 +67,7 @@ function Jobs() {
         </span>
       </div>
 
-      {jobs.map((job) => (
+      {jobs?.map((job) => (
 
         <div
           key={job._id}

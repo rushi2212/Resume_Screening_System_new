@@ -86,8 +86,24 @@ const candidateSchema = new mongoose.Schema(
       },
     ],
 
+    domains: [
+      {
+        type: String,
+      },
+    ],
+
     resumeText: {
       type: String,
+    },
+
+    resumeEmbedding: {
+      type: [Number],
+      default: [],
+    },
+
+    semanticSimilarity: {
+      type: Number,
+      default: 0,
     },
 
     // AI Scores
@@ -148,7 +164,12 @@ const candidateSchema = new mongoose.Schema(
 
 candidateSchema.index(
   { email: 1, job: 1 },
-  { unique: true }
+  {
+    unique: true,
+    partialFilterExpression: {
+      job: { $type: "objectId" },
+    },
+  }
 );
 
 module.exports = mongoose.model(
